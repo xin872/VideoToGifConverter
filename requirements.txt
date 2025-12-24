@@ -1,0 +1,7 @@
+# Python 依赖包
+# 用于视频转 GIF 转换器
+
+# CustomTkinter - 现代化 UI 库
+customtkinter>=5.2.0
+opencv-python>=4.8.0
+Pillow>=10.0.0
