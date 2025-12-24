@@ -1,4 +1,4 @@
-('E:\\web_workspace\\video\\build\\VideoToGifConverter\\PYZ-00.pyz',
+('E:\\VideoToGifConverter\\build\\VideoToGifConverter\\PYZ-00.pyz',
  [('PIL',
    'D:\\install\\python311\\Lib\\site-packages\\PIL\\__init__.py',
    'PYMODULE'),

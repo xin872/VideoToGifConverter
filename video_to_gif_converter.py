@@ -236,18 +236,18 @@ class ModernGifConverter:
     def __init__(self, root):
         """初始化应用程序"""
         self.root = root
-        self.root.title("GIF Converter")
+        self.root.title("GIF/WebP Converter")
         
         # 设置窗口大小（优化布局）
         window_width = 900
-        window_height = 950
+        window_height = 920
         screen_width = root.winfo_screenwidth()
         screen_height = root.winfo_screenheight()
         x = (screen_width - window_width) // 2
         y = (screen_height - window_height) // 2
         self.root.geometry(f"{window_width}x{window_height}+{x}+{y}")
         self.root.resizable(True, True)  # 允许调整大小
-        self.root.minsize(850, 900)  # 设置最小尺寸
+        self.root.minsize(850, 880)  # 设置最小尺寸
         
         # 设置主题
         ctk.set_appearance_mode("dark")
@@ -263,6 +263,7 @@ class ModernGifConverter:
         self.is_seeking = False  # 拖动进度条标志
         self.was_playing_before_seek = False  # 拖动前的播放状态
         self.pause_position = 0  # 暂停时的位置
+        self.output_format = "GIF"  # 输出格式：GIF 或 WebP
         
         # 创建 GUI
         self.create_widgets()
@@ -341,54 +342,54 @@ class ModernGifConverter:
         
         title_label = ctk.CTkLabel(
             header_frame,
-            text="🎬 GIF Converter",
-            font=ctk.CTkFont(size=20, weight="bold"),  # 减小字体
+            text="🎬 GIF/WebP Converter",
+            font=ctk.CTkFont(size=18, weight="bold"),
             text_color=("#1f6aa5", "#4a9eff")
         )
         title_label.pack()
         
         subtitle_label = ctk.CTkLabel(
             header_frame,
-            text="视频预览 · 交互式裁剪 · 高质量转换",
-            font=ctk.CTkFont(size=10),  # 减小字体
+            text="视频预览 · 交互式裁剪 · 多格式输出",
+            font=ctk.CTkFont(size=9),
             text_color="gray"
         )
-        subtitle_label.pack(pady=(2, 0))
+        subtitle_label.pack(pady=(1, 0))
         
         separator = ctk.CTkFrame(header_frame, height=1, fg_color=("#d0d0d0", "#3a3a3a"))  # 减小高度
         separator.pack(fill="x", pady=(5, 0))
         
         # ===== 文件选择区域 =====
         file_card = ctk.CTkFrame(self.root, corner_radius=8)
-        file_card.pack(fill="x", padx=20, pady=(0, 8))  # 减小间距
+        file_card.pack(fill="x", padx=20, pady=(0, 6))
         
         file_inner = ctk.CTkFrame(file_card, fg_color="transparent")
-        file_inner.pack(fill="x", padx=12, pady=10)  # 减小内边距
+        file_inner.pack(fill="x", padx=10, pady=8)
         
         file_header = ctk.CTkLabel(
             file_inner,
             text="📁 选择视频文件",
-            font=ctk.CTkFont(size=11, weight="bold"),  # 减小字体
+            font=ctk.CTkFont(size=11, weight="bold"),
             anchor="w"
         )
-        file_header.pack(fill="x", pady=(0, 5))  # 减小间距
+        file_header.pack(fill="x", pady=(0, 4))
         
         self.file_label = ctk.CTkLabel(
             file_inner,
             text="未选择文件",
-            font=ctk.CTkFont(size=11),  # 减小字体
+            font=ctk.CTkFont(size=10),
             anchor="w",
             text_color="gray"
         )
-        self.file_label.pack(fill="x", pady=(0, 8))  # 减小间距
+        self.file_label.pack(fill="x", pady=(0, 6))
         
         select_btn = ctk.CTkButton(
             file_inner,
             text="浏览文件",
             command=self.select_file,
-            height=32,  # 减小高度
+            height=30,
             corner_radius=8,
-            font=ctk.CTkFont(size=12, weight="bold"),  # 减小字体
+            font=ctk.CTkFont(size=12, weight="bold"),
             fg_color=("#2fa572", "#2fa572"),
             hover_color=("#26865f", "#26865f")
         )
@@ -415,9 +416,9 @@ class ModernGifConverter:
                 preview_inner,
                 fg_color="black",
                 corner_radius=8,
-                height=220  # 进一步减小高度
+                height=200
             )
-            video_container.pack(fill="x", pady=(0, 8))  # 减小间距
+            video_container.pack(fill="x", pady=(0, 6))
             video_container.pack_propagate(False)
             
             # Canvas 用于显示视频帧
@@ -430,7 +431,7 @@ class ModernGifConverter:
             
             # 初始化自定义视频播放器
             canvas_width = 860
-            canvas_height = 216  # 匹配新的容器高度 (220 - 4px padding)
+            canvas_height = 196  # 匹配新的容器高度 (200 - 4px padding)
             self.video_player = VideoPreviewPlayer(
                 self.video_canvas,
                 width=canvas_width,
@@ -585,18 +586,43 @@ class ModernGifConverter:
         self.skip_end_entry.insert(0, "0")
         self.skip_end_entry.pack(fill="x")
         
+        # ===== 输出格式选择 =====
+        format_card = ctk.CTkFrame(self.root, corner_radius=8)
+        format_card.pack(fill="x", padx=20, pady=(0, 6))
+        
+        format_inner = ctk.CTkFrame(format_card, fg_color="transparent")
+        format_inner.pack(fill="x", padx=10, pady=8)
+        
+        format_header = ctk.CTkLabel(
+            format_inner,
+            text="🎨 输出格式",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            anchor="w"
+        )
+        format_header.pack(fill="x", pady=(0, 4))
+        
+        self.format_selector = ctk.CTkSegmentedButton(
+            format_inner,
+            values=["GIF", "WebP"],
+            command=self.on_format_change,
+            height=32,
+            font=ctk.CTkFont(size=12, weight="bold")
+        )
+        self.format_selector.set("GIF")
+        self.format_selector.pack(fill="x")
+        
         # ===== 转换按钮 =====
         convert_frame = ctk.CTkFrame(self.root, fg_color="transparent")
-        convert_frame.pack(fill="x", padx=20, pady=(0, 8))  # 减小间距
+        convert_frame.pack(fill="x", padx=20, pady=(0, 6))
         
         self.convert_btn = ctk.CTkButton(
             convert_frame,
             text="🚀 开始转换",
             command=self.start_conversion,
             state="disabled",
-            height=38,  # 减小高度
+            height=36,
             corner_radius=8,
-            font=ctk.CTkFont(size=14, weight="bold"),  # 减小字体
+            font=ctk.CTkFont(size=13, weight="bold"),
             fg_color=("#1f6aa5", "#1f6aa5"),
             hover_color=("#174e7c", "#174e7c")
         )
@@ -650,9 +676,9 @@ class ModernGifConverter:
         
         self.log_text = ctk.CTkTextbox(
             log_inner,
-            height=80,  # 减小高度
+            height=70,
             corner_radius=8,
-            font=ctk.CTkFont(family="Consolas", size=9),  # 减小字体
+            font=ctk.CTkFont(family="Consolas", size=9),
             wrap="none",
             activate_scrollbars=True
         )
@@ -910,6 +936,12 @@ class ModernGifConverter:
         except Exception as e:
             self.log(f"⚠️ 设置终点失败: {str(e)}")
     
+    def on_format_change(self, value):
+        """格式选择变化回调"""
+        self.output_format = value
+        if hasattr(self, 'log_text'):
+            self.log(f"✓ 已选择输出格式: {value}")
+    
     def log(self, message):
         """添加日志消息"""
         self.log_text.insert("end", message + "\n")
@@ -1002,9 +1034,12 @@ class ModernGifConverter:
         if VIDEO_PLAYER_AVAILABLE and self.is_playing:
             self.toggle_play_pause()
         
-        # 生成输出文件名
+        # 生成输出文件名（根据格式）
         input_path = Path(self.input_file)
-        self.output_file = str(input_path.parent / f"{input_path.stem}.gif")
+        if self.output_format == "WebP":
+            self.output_file = str(input_path.parent / f"{input_path.stem}.webp")
+        else:
+            self.output_file = str(input_path.parent / f"{input_path.stem}.gif")
         
         # 禁用控制
         self.convert_btn.configure(state="disabled")
@@ -1074,18 +1109,37 @@ class ModernGifConverter:
             
             effective_duration = end_to - start_seek
             self.log(f"✂️ 裁剪设置: 开始={start_seek:.2f}秒, 结束={end_to:.2f}秒, 有效时长={effective_duration:.2f}秒")
-            self.log("🎬 开始转换...")
+            self.log(f"🎬 开始转换为 {self.output_format}...")
             
-            # FFmpeg 命令
-            cmd = [
-                self.ffmpeg_path,
-                "-ss", str(start_seek),
-                "-to", str(end_to),
-                "-i", self.input_file,
-                "-vf", "fps=8,scale=240:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=16[p];[s1][p]paletteuse=dither=bayer:bayer_scale=3",
-                "-y",
-                self.output_file
-            ]
+            # 根据格式选择不同的 FFmpeg 命令
+            if self.output_format == "WebP":
+                # WebP 转换参数
+                cmd = [
+                    self.ffmpeg_path,
+                    "-ss", str(start_seek),
+                    "-to", str(end_to),
+                    "-i", self.input_file,
+                    "-vcodec", "libwebp",
+                    "-filter_complex", "[0:v] fps=10,scale=480:-1:flags=lanczos",
+                    "-compression_level", "6",
+                    "-q:v", "25",
+                    "-loop", "0",
+                    "-preset", "drawing",
+                    "-an",
+                    "-y",
+                    self.output_file
+                ]
+            else:
+                # GIF 转换参数（原有逻辑）
+                cmd = [
+                    self.ffmpeg_path,
+                    "-ss", str(start_seek),
+                    "-to", str(end_to),
+                    "-i", self.input_file,
+                    "-vf", "fps=8,scale=240:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=16[p];[s1][p]paletteuse=dither=bayer:bayer_scale=3",
+                    "-y",
+                    self.output_file
+                ]
             
             if os.name == 'nt':
                 creationflags = subprocess.CREATE_NO_WINDOW
